@@ -1,0 +1,50 @@
+name: 'GitHub Contributions SVG Generator'
+description: 'Generates GitHub stats, streak, trophies, snake animation, and 3D contribution graph as SVGs'
+branding:
+  icon: 'activity'
+  color: 'green'
+
+inputs:
+  github-token:
+    description: 'GitHub token for API access (add repo scope for private contribution data)'
+    required: true
+  username:
+    description: 'GitHub username (defaults to repository owner)'
+    required: false
+    default: '${{ github.repository_owner }}'
+  output-dir:
+    description: 'Directory where generated SVG files are written (relative to workspace root)'
+    required: false
+    default: 'assets'
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+        cache: false
+
+    - name: Generate stats, streak, trophies, top-langs
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        GITHUB_USERNAME: ${{ inputs.username }}
+      run: go run ./scripts/stats --output-dir=${{ github.workspace }}/${{ inputs.output-dir }}
+
+    - name: Generate snake animation
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        GITHUB_USERNAME: ${{ inputs.username }}
+      run: go run ./scripts/snake --output=${{ github.workspace }}/${{ inputs.output-dir }}/snake.svg
+
+    - name: Generate 3D contribution graph
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        USERNAME: ${{ inputs.username }}
+      run: go run ./scripts/contrib3d --output=${{ github.workspace }}/${{ inputs.output-dir }}/contrib-3d.svg
